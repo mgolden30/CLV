@@ -2,13 +2,15 @@
 Converge Cycles of Henon
 %}
 
-n = 7; %cycle length
+for n = 11:20
+
 trials = 100;
 rng(1);
 
 cycles = {};
 i = 1;
 
+tic;
 for tr = 1:trials
   x = 1.5*(2*rand(n,1) - 1);
   [x,f] = newton(x);
@@ -18,8 +20,30 @@ for tr = 1:trials
     i = i+1;
   end
 end
+time = toc;
 
-cycles
+%Check for non-prime cycles
+d = divisors(n);
+nonprime = zeros(numel(cycles),1);
+
+for j = 1:numel(d)-1 %skip 1 and n
+  for i = 1:numel(cycles)
+    c = cycles{i};
+    if norm(c - circshift(c,d(j))) < 1e-10
+      nonprime(i) = 1;
+    end
+  end
+end
+
+%kill nonprime cycles
+cycles(nonprime == 1) = [];
+
+fprintf("Found %d prime cycles of length %d in %f seconds.\n", numel(cycles), n, time);
+save( "prime_cycles/"+n+".mat", "cycles" );
+end
+
+
+
 
 function bool = is_distinct(x, cycles)
   bool = true;
@@ -37,7 +61,7 @@ function [x,f] = newton(x)
   maxit = 1024;
   for i = 1:maxit
     f = obj(x);
-    fprintf("%d: |f| = %e\n", i, norm(f) );
+    %fprintf("%d: |f| = %e\n", i, norm(f) );
     if norm(f) < 1e-13
       break;
     end 
