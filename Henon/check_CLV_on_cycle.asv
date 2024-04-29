@@ -1,0 +1,41 @@
+%{
+Apply the CLV routine to check if we get the same result as from Floquet
+analysis
+%}
+
+clear;
+
+p = 15; %cycle length
+cycles = lift_cycles(p);
+
+%Traditional Floquet analysis
+maxit = 1024;
+[v_e, m_e, v_c, m_c] = floquet_analysis( cycles, p );
+
+%Let's just look at the first cycle of length p
+c = cycles{1};
+c = c.';
+
+v_c = v_c{1}; %Take the Floquet analysis answer
+CLV = v_c*0;
+
+for m = 1:p
+  x0  = c(:,m);
+  n     = 32;  %time forward
+  maxit = 4; %power iterations 
+
+  %Compute the orthonormal vectors
+  V  = graham_schmidt_vectors( x0, n, maxit );
+
+  %Take the last one (covariant)
+  CLV(:,m) = V(:,2);
+end
+
+
+CLV = CLV ./ vecnorm( CLV );
+v_c = v_c ./ vecnorm( v_c );
+
+%Check if this is proportional to the Floquet vector
+CLV
+v_c
+ratio = CLV ./ v_c

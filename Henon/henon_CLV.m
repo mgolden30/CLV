@@ -1,0 +1,223 @@
+%{
+CLV attempt
+%}
+
+addpath("functions");
+
+
+
+
+%% Look at attractor
+
+figure(1);
+
+N = 2^13;
+x0 = [0.5; 0.2];
+xs = generate_traj( x0, N );
+
+ms = 10; %marker size
+scatter( xs(1,:), xs(2,:), ms, 'filled', 'MarkerFaceColor', 'black' );
+
+%For full domain
+xlim([-1.5, 1.5]);
+ylim([-0.5, 0.5]);
+
+%for Zoomed in 
+%xlim([0.7968    1.0490]);
+%ylim([ 0.0370    0.2217]);
+
+%xlim([-0.2397    0.1789]);
+%ylim([ -0.1322   -0.0606]);
+
+xticks(xlim);
+yticks(ylim);
+
+
+axis square;
+
+
+
+
+
+%% Load some pre-converged prime cycles 
+
+cs = [];
+v_es = [];
+v_cs = [];
+
+for p = 2:13
+  cycles = lift_cycles( p );
+  hold on
+  for i = 1:numel(cycles)
+    c = cycles{i};
+    scatter( c(:,1), c(:,2), 2*ms, "filled", "MarkerFaceColor", "red"  );
+  end
+  hold off
+
+
+  %Compute the Floquet vectors and multipliers for this long orbit
+  [v_e, m_e, v_c, m_c] = floquet_analysis( cycles, p );
+
+  for i = 1:numel(cycles)
+    c = cycles{i};
+    c = c.';
+
+    cs   = [cs, c]; %running list of base points
+    v_es = [v_es, v_e{i}];
+    v_cs = [v_cs, v_c{i}];
+  end
+end
+
+%Plot the stable and unstable directions all at once
+hold on
+scale = 0.05;
+lw = 1; %linewidth
+
+%EXPANDING DIRECTIONS
+nematic_quiver(cs, v_es, scale,lw, gray);
+
+%CONTRACTING DIRECTIONS
+%nematic_quiver(cs, v_cs, scale,lw,"blue");
+
+hold off
+
+
+
+%% Plot stable CLV
+gpx = 64*2*2;
+gpy = 64*2*2;
+xl = xlim();
+yl = ylim();
+
+
+xg = linspace(xl(1),xl(2),gpx);
+yg = linspace(yl(1),yl(2),gpy);
+[xx,yy] = meshgrid(xg,yg);
+
+clv_c = zeros(gpy,gpx,2);
+clv_e = zeros(gpy,gpx,2);
+
+n = 8; %function evaluations in the future
+maxit = 16;
+for i = 1:gpx
+  for j = 1:gpy
+    x0 = [xg(i); yg(j)];
+    tic
+    %V = graham_schmidt_vectors( x0, n, maxit );
+    [vv_c, vv_e] = compute_CLVs( x0, n, maxit );
+    toc
+    clv_e(j,i,:) = vv_e;
+    clv_c(j,i,:) = vv_c;
+  end
+end
+
+grid = [reshape(xx, [1,numel(xx)]); reshape( yy, [1,numel(yy)])];
+clv_c = reshape(clv_c, [gpy*gpx,2]);
+clv_c = clv_c.';
+clv_e = reshape(clv_e, [gpy*gpx,2]);
+clv_e = clv_e.';
+
+
+%gray = [0.5 0.5 0.5];
+lw   = 1;
+scale = 0.0125;
+hold on
+nematic_quiver( grid, clv_e, scale, lw, "red");
+nematic_quiver( grid, clv_c, scale, lw, "blue");
+hold off
+
+xlabel("x");
+ylabel("y");
+
+%%
+figure(2);
+wedge =  clv_e(1,:).*clv_c(2,:) - clv_c(1,:).*clv_e(2,:);
+wedge = reshape( wedge, [gpy, gpx] );
+imagesc(xg,yg, abs(wedge) );
+title("$| {\bf v}_1 \wedge {\bf v}_{2}|$", "interpreter", "latex", "FontSize", 20);
+cb = colorbar();
+clim([0,1]);
+set( cb, "xtick", [0,1])
+axis square
+set( gca, "ydir", "normal" );
+
+hold on
+  ms = 10; %marker size
+  scatter( xs(1,:), xs(2,:), ms, 'filled', 'MarkerFaceColor', 'black' );
+hold off
+
+xticks([-1.5, 1.5]);
+yticks([-0.5 0.5]);
+xlabel("x");
+ylabel("y");
+set(gcf, "color", "w");
+
+colormap parula;
+
+saveas(gcf, "figs/wedge.png");
+return;
+
+%%
+
+n1 = clv_contract(:,:,1);
+n2 = clv_contract(:,:,2);
+
+Q11 = 1/2*(n1.^2 - n2.^2);
+Q12 = n1.*n2;
+
+sigma = 1;
+Q11 = imgaussfilt(Q11, sigma);
+Q12 = imgaussfilt(Q12, sigma);
+
+
+drawnow;
+S = Q11.^2 + Q12.^2;
+S( ~isfinite(S) ) = 10000;
+imagesc(xg,yg, S);
+clim([0, 0.2]);
+c = colorbar();
+
+set(c, "xtick", [0:0.1:0.2]);
+
+set(gca, "ydir", "normal");
+colormap parula;
+
+hold on
+scatter( xs(1,:), xs(2,:), 3,'filled', 'MarkerFaceColor', 'black');
+hold off
+axis square
+
+xlabel("x");
+ylabel("y");
+title("nematic scalar order parameter");
+
+
+
+
+
+function nematic_quiver(c,v,scale,lw,color)
+  flatten = @(x) reshape(x, [numel(x),1]);
+
+  x  = flatten(c(1,:));
+  y  = flatten(c(2,:));
+  vx = flatten(v(1,:));
+  vy = flatten(v(2,:));
+
+  xl = xlim;
+  yl = ylim;
+  dx = xl(2)-xl(1);
+  dy = yl(2)-yl(1);
+  
+  normv = sqrt( vx.^2 / dx^2 + vy.^2 / dy^2 );
+  vx = vx./normv;
+  vy = vy./normv;
+
+  x = [x,x];
+  y = [y,y];
+  vx= [vx,-vx];
+  vy= [vy,-vy];
+  
+
+  q = quiver(x, y, vx, vy, scale, "linewidth", lw, "color", color);
+  q.ShowArrowHead = "off";
+end
