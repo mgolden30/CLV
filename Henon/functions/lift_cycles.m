@@ -9,11 +9,11 @@ function cycles_2d = lift_cycles( p )
   load("prime_cycles/" + p + ".mat");
   
   b = 0.3;
-  n = numel( cycles );
+  n = size( cycles, 2 );
   cycles_2d = cell( n, 1 );
   
   for i = 1:n
-    c = cycles{i};
+    c = cycles(:,i); %Take the x component
  
     %restore the y component
     c2 = [ c, b*circshift(c,1,1) ];

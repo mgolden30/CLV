@@ -37,6 +37,7 @@ function [v_e, m_e, v_c, m_c] = floquet_analysis( cycles, p )
     
     D = D(   idx);
     V = V(:, idx);  
+    D
     phase = D./abs(D);
 
     for j = 1:p
@@ -45,6 +46,15 @@ function [v_e, m_e, v_c, m_c] = floquet_analysis( cycles, p )
       V(b,:) = V(b,:) .* phase.'.^j;
     end
 
+
+    %if any( imag(V) > 0.01 )
+    %  V = 1i*V;
+    %end
+
+    %Kill absolute phase!
+    V = V./V(1,:);
+
+    %Take real part
     V = real(V);
 
     v_e{i} = reshape( V(:,1), [2,p] );

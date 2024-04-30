@@ -2,6 +2,8 @@
 CLV attempt
 %}
 
+clear;
+
 addpath("functions");
 
 
@@ -9,14 +11,16 @@ addpath("functions");
 
 %% Look at attractor
 
+
 figure(1);
+clf;
 
 N = 2^13;
 x0 = [0.5; 0.2];
 xs = generate_traj( x0, N );
 
 ms = 10; %marker size
-scatter( xs(1,:), xs(2,:), ms, 'filled', 'MarkerFaceColor', 'black' );
+scatter( xs(1,:), xs(2,:), ms, 'filled', 'MarkerFaceColor', 'black', "MarkerEdgeColor", "black" );
 
 %For full domain
 xlim([-1.5, 1.5]);
@@ -38,14 +42,13 @@ axis square;
 
 
 
-
 %% Load some pre-converged prime cycles 
 
 cs = [];
 v_es = [];
 v_cs = [];
 
-for p = 2:13
+for p = 1:10
   cycles = lift_cycles( p );
   hold on
   for i = 1:numel(cycles)
@@ -53,7 +56,6 @@ for p = 2:13
     scatter( c(:,1), c(:,2), 2*ms, "filled", "MarkerFaceColor", "red"  );
   end
   hold off
-
 
   %Compute the Floquet vectors and multipliers for this long orbit
   [v_e, m_e, v_c, m_c] = floquet_analysis( cycles, p );
@@ -72,20 +74,20 @@ end
 hold on
 scale = 0.05;
 lw = 1; %linewidth
+gray = [0.5,0.5,0.5];
 
 %EXPANDING DIRECTIONS
-nematic_quiver(cs, v_es, scale,lw, gray);
+nematic_quiver(cs, v_es, scale, lw, "red");
 
 %CONTRACTING DIRECTIONS
-%nematic_quiver(cs, v_cs, scale,lw,"blue");
+nematic_quiver(cs, v_cs, scale, lw, "blue" );
 
 hold off
 
 
-
 %% Plot stable CLV
-gpx = 64*2*2;
-gpy = 64*2*2;
+gpx = 128;
+gpy = 128;
 xl = xlim();
 yl = ylim();
 
@@ -122,12 +124,21 @@ clv_e = clv_e.';
 lw   = 1;
 scale = 0.0125;
 hold on
-nematic_quiver( grid, clv_e, scale, lw, "red");
-nematic_quiver( grid, clv_c, scale, lw, "blue");
+nematic_quiver( grid, clv_e, scale, lw, gray);
+title("expanding CLV");
+
+%nematic_quiver( grid, clv_c, scale, lw, gray);
+%title("contracting CLV")
+
 hold off
 
 xlabel("x");
 ylabel("y");
+
+drawnow;
+
+saveas(gcf, "figs/CLV2.png");
+
 
 %%
 figure(2);
