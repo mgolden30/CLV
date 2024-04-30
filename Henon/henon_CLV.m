@@ -27,8 +27,8 @@ xlim([-1.5, 1.5]);
 ylim([-0.5, 0.5]);
 
 %for Zoomed in 
-%xlim([0.7968    1.0490]);
-%ylim([ 0.0370    0.2217]);
+xlim([0.7968    1.0490]);
+ylim([ 0.0370    0.2217]);
 
 %xlim([-0.2397    0.1789]);
 %ylim([ -0.1322   -0.0606]);
@@ -124,11 +124,11 @@ clv_e = clv_e.';
 lw   = 1;
 scale = 0.0125;
 hold on
-nematic_quiver( grid, clv_e, scale, lw, gray);
-title("expanding CLV");
+%nematic_quiver( grid, clv_e, scale, lw, gray);
+%title("expanding CLV");
 
-%nematic_quiver( grid, clv_c, scale, lw, gray);
-%title("contracting CLV")
+nematic_quiver( grid, clv_c, scale, lw, gray);
+title("contracting CLV")
 
 hold off
 

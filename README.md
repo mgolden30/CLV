@@ -1,2 +1,2 @@
-# henon
-MATLAB code for exploring the Henon map
+# CLV
+MATLAB code for exploring the Covariant Lyapunov Vectors

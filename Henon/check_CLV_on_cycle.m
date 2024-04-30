@@ -5,6 +5,8 @@ analysis
 
 clear;
 
+addpath("functions");
+
 p = 10; %cycle length
 cycles = lift_cycles(p);
 
